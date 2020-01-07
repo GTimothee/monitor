@@ -3,7 +3,8 @@ import logging
 import psutil
 import time 
 import os
-from os.path import join
+from os import mkdir
+from os.path import join, isdir
 
 from .utils import get_module_dir, get_today_date
 
@@ -38,6 +39,8 @@ class Monitor(Thread):
             module_dir = get_module_dir()
             if module_dir:
                 self.log_dirpath = join(module_dir, 'logs')
+                if isdir(module_dir) and not isdir(self.log_dirpath):
+                    mkdir(self.log_dirpath)
             else:
                 raise ValueError(f'Error: unabled to setup default log dirpath. \
                     Please setup logging manually with `log_dirpath`.')
