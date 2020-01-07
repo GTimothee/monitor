@@ -4,7 +4,7 @@ import time
 if __name__ == "__main__":
     _monitor = Monitor()
     _monitor.system_info()
-    _monitor.start()
+    _monitor.start(delay=2)
     try:
         for i in range(50):
             time.sleep(0.2)

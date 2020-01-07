@@ -3,6 +3,9 @@ import logging
 import psutil
 import time 
 
+import os
+clear = lambda: os.system('clear') #on Linux System
+
 
 class Monitor(Thread):
     def __init__(self, printing=True, log_filepath=None, log_level=logging.INFO):
@@ -16,6 +19,7 @@ class Monitor(Thread):
             log_level: logging level for logging (inclusive)
         """
         self.run = False
+        self.delay = 1
         self.printing = printing
 
         if log_filepath:
@@ -32,10 +36,11 @@ class Monitor(Thread):
         --------
             delay: time in second before printing monitoring data
         """
+        self.delay = delay
         self.run = True
         last_t = time.time() 
         while self.run:
-            if time.time() - last_t >= delay:
+            if time.time() - last_t >= self.delay:
                 self.inspect()
                 last_t = time.time()
 
@@ -59,6 +64,16 @@ class Monitor(Thread):
         """
         self.printing = printing
 
+    
+    def set_delay(delay):
+        """ Set delay before printing information.
+        
+        Arguments:
+        ----------
+            delay: delay in seconds
+        """
+        self.delay = delay
+
 
     def system_info(self):
         """ Get system general infomation.
@@ -69,9 +84,12 @@ class Monitor(Thread):
         self.printer(f'\t-Found {nb_logic} logical cores for {nb_physic} physical CPUs')
 
 
-    def inspect(self):
+    def inspect(self, clear_console=True):
         """ Print monitoring information.
         """
+        if self.printing and clear_console:
+            clear()
+
         self.print_memory_info()
 
         cpu_ntuple = psutil.cpu_times(percpu=False)
@@ -87,7 +105,8 @@ class Monitor(Thread):
         """
         self.printer(f'\nStatistics for Virtual Memory')
         mem = psutil.virtual_memory()
-        self.printer(f'\t-Available RAM: {mem.available}/{mem.total} ({mem.percent}%)')
+        self.printer(f'\t-Used RAM: {mem.percent}%')
+        self.printer(f'\t-Available RAM: {mem.available /1024 /1024:.2f}MB /{mem.total /1024 /1024:.2f}MB')
 
         # from the docs at https://psutil.readthedocs.io/en/latest/
         THRESHOLD = 100 * 1024 * 1024  # 100MB
@@ -99,7 +118,7 @@ class Monitor(Thread):
                 print(message)
         
         swap = psutil.swap_memory()
-        self.printer(f'\t- Swap used: {swap.used}/{swap.total} ({swap.percent}%)')
+        self.printer(f'\t-Swap used: {swap.used /1024 /1024:.2f}MB /{swap.total /1024 /1024:.2f}MB ({swap.percent}%)')
 
 
     def print_info(self, ntuple, title=None):

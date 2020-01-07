@@ -4,6 +4,9 @@
 When you want to monitor your system or an application you usually want to use psutil. Instead of everyone creating the same code snippets for basic and general monitoring using psutil, we should gather our forces to create an efficient and reliable package on top of psutil for daily use.
 
 ## Features
+**WARNING**: supported for linux only for the moment
+
+
 - get system information (number of CPUs, etc.)
 - real time monitoring using `monitor` object in a separate thread. 
 
