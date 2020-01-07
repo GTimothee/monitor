@@ -14,6 +14,7 @@ def get_module_dir():
     try:
         module_path = inspect.getfile(monitor)
         _dir = dirname(module_path)
+        print(f'Using default log directory: {_dir}')
     except Exception as e:
         exc_info = sys.exc_info()
         print(f'Unable to retrieve module location.')
