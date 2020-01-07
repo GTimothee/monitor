@@ -26,6 +26,8 @@ class Monitor(Thread):
 
         # options
         self.printing = printing
+        if self.printing:
+            self.clear_console = True
         self.logging = logging
         self.log_dirpath = log_dirpath
         self.log_level = log_level
@@ -72,6 +74,14 @@ class Monitor(Thread):
         self.run = False
 
 
+    def enable_clearconsole(self):
+        self.clear_console = True
+
+
+    def disable_clearconsole(self):
+        self.clear_console = False
+
+
     def set_logging(logging, log_dirpath='default', log_level=logging.INFO):
         """
         logging: a boolean
@@ -113,10 +123,10 @@ class Monitor(Thread):
         self.printer(f'\tFound {nb_logic} logical cores for {nb_physic} physical CPUs')
 
 
-    def inspect(self, clear_console=True):
+    def inspect(self):
         """ Print monitoring information.
         """
-        if self.printing and clear_console:
+        if self.printing and self.clear_console:
             clear()
 
         self.print_memory_info()
