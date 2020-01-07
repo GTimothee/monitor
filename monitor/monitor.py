@@ -2,13 +2,15 @@ from threading import Thread
 import logging
 import psutil
 import time 
-
 import os
-clear = lambda: os.system('clear') #on Linux System
+from os.path import join
 
+from .utils import get_module_dir, get_today_date
+
+clear = lambda: os.system('clear') # on Linux System
 
 class Monitor(Thread):
-    def __init__(self, printing=True, log_filepath=None, log_level=logging.INFO):
+    def __init__(self, printing=True, logging=True, log_dirpath='default', log_level=logging.INFO):
         """ 
         Outputs information in the console by default.
         
@@ -20,13 +22,29 @@ class Monitor(Thread):
         """
         self.run = False
         self.delay = 1
-        self.printing = printing
 
-        if log_filepath:
-            self.logging = True 
-            logging.basicConfig(filename=log_filepath,level=log_level)
-        else:
-            self.logging = False
+        # options
+        self.printing = printing
+        self.logging = logging
+        self.log_dirpath = log_dirpath
+        self.log_level = log_level
+
+        if self.logging:
+            self.setup_logging()
+        
+
+    def setup_logging(self):
+        if self.log_dirpath == 'default':
+            module_dir = get_module_dir()
+            if module_dir:
+                self.log_dirpath = join(module_dir, 'logs')
+            else:
+                raise ValueError(f'Error: unabled to setup default log dirpath. \
+                    Please setup logging manually with `log_dirpath`.')
+        
+        date_time = get_today_date()
+        log_filepath = join(self.log_dirpath, date_time + '.log')
+        logging.basicConfig(filename=log_filepath,level=self.log_level)
 
 
     def start(self, delay=1):
@@ -51,11 +69,19 @@ class Monitor(Thread):
         self.run = False
 
 
-    def set_logging(logging):
+    def set_logging(logging, log_dirpath='default', log_level=logging.INFO):
         """
         logging: a boolean
         """
         self.logging = logging
+        if self.logging:
+            self.setup_logging(log_dirpath)
+
+
+    def set_log_level(log_level):
+        self.log_level = log_level
+        if not self.logging:
+            print(f'WARNING: setting log_level without logging being activated.')
 
     
     def set_printing(printing):
@@ -81,7 +107,7 @@ class Monitor(Thread):
         self.printer(f'\nGeneral information on the system:')
         nb_logic = psutil.cpu_count(logical=True)
         nb_physic = psutil.cpu_count(logical=False)
-        self.printer(f'\t-Found {nb_logic} logical cores for {nb_physic} physical CPUs')
+        self.printer(f'\tFound {nb_logic} logical cores for {nb_physic} physical CPUs')
 
 
     def inspect(self, clear_console=True):
@@ -95,18 +121,18 @@ class Monitor(Thread):
         cpu_ntuple = psutil.cpu_times(percpu=False)
         self.print_info(cpu_ntuple, "CPU times")
 
-        self.printer(f'\nSupplementary statistics')
+        self.printer(f'Supplementary statistics')
         cpu_percent = psutil.cpu_percent(interval=None, percpu=False)
-        self.printer(f'\t-CPU usage: {cpu_percent}%')
+        self.printer(f'\tCPU usage: {cpu_percent}%')
 
 
     def print_memory_info(self):
         """ Custom printer for neatly printing memory info.
         """
-        self.printer(f'\nStatistics for Virtual Memory')
+        self.printer(f'Statistics for Virtual Memory')
         mem = psutil.virtual_memory()
-        self.printer(f'\t-Used RAM: {mem.percent}%')
-        self.printer(f'\t-Available RAM: {mem.available /1024 /1024:.2f}MB /{mem.total /1024 /1024:.2f}MB')
+        self.printer(f'\tUsed RAM: {mem.percent}%')
+        self.printer(f'\tAvailable RAM: {mem.available /1024 /1024:.2f}/{mem.total /1024 /1024:.2f} MB')
 
         # from the docs at https://psutil.readthedocs.io/en/latest/
         THRESHOLD = 100 * 1024 * 1024  # 100MB
@@ -118,7 +144,7 @@ class Monitor(Thread):
                 print(message)
         
         swap = psutil.swap_memory()
-        self.printer(f'\t-Swap used: {swap.used /1024 /1024:.2f}MB /{swap.total /1024 /1024:.2f}MB ({swap.percent}%)')
+        self.printer(f'\tSwap used: {swap.used /1024 /1024:.2f}/{swap.total /1024 /1024:.2f} MB ({swap.percent}%)')
 
 
     def print_info(self, ntuple, title=None):
@@ -126,9 +152,9 @@ class Monitor(Thread):
         Given a named tuple, print information contained in it.
         """
         if title:
-            self.printer(f'\nStatistics for {title}')
+            self.printer(f'Statistics for {title}')
         for key, val in ntuple._asdict().items():
-            self.printer(f'\t-{key}: {val}')
+            self.printer(f'\t{key}: {val}')
 
 
     def printer(self, string):
