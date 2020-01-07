@@ -1,8 +1,3 @@
-# monitor
-
-example usage:
-
-```
 from monitor import Monitor
 import time
 
@@ -15,4 +10,3 @@ if __name__ == "__main__":
             time.sleep(0.2)
     finally:    
         _monitor.stop()
-```
