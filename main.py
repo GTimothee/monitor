@@ -1,4 +1,4 @@
-from .monitor.monitor import Monitor
+from monitor.monitor import Monitor
 import time
 
 if __name__ == "__main__":

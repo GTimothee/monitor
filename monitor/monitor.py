@@ -1,25 +1,43 @@
 from threading import Thread
+import logging
+import psutil
+import time 
 
 
 class Monitor(Thread):
-    def __init__(self, logging=True, printing=True):
-        """
-        Arguments:
+    def __init__(self, printing=True, log_filepath=None, log_level=logging.INFO):
+        """ 
+        Outputs information in the console by default.
+        
+        Options:
         ----------
-            logging: a boolean
-            printing: a boolean
+            printing: enables printing info into console, default is True
+            log_filepath: activate logging to file
+            log_level: logging level for logging (inclusive)
         """
         self.run = False
-        self.logging = logging 
         self.printing = printing
 
+        if log_filepath:
+            self.logging = True 
+            logging.basicConfig(filename=log_filepath,level=log_level)
+        else:
+            self.logging = False
 
-    def start(self):
+
+    def start(self, delay=1):
         """ Start printing monitoring information.
+
+        Options:
+        --------
+            delay: time in second before printing monitoring data
         """
-        self.run = True 
+        self.run = True
+        last_t = time.time() 
         while self.run:
-            self.inspect()
+            if time.time() - last_t >= delay:
+                self.inspect()
+                last_t = time.time()
 
 
     def stop(self):
@@ -68,14 +86,21 @@ class Monitor(Thread):
         """ Custom printer for neatly printing memory info.
         """
         self.printer(f'\nStatistics for Virtual Memory')
-        ntuple = psutil.virtual_memory()
-        self.printer(f'Available RAM: {ntuple.available}/{ntuple.total} ({ntuple.percent}%)')
+        mem = psutil.virtual_memory()
+        self.printer(f'\t-Available RAM: {mem.available}/{mem.total} ({mem.percent}%)')
 
         # from the docs at https://psutil.readthedocs.io/en/latest/
         THRESHOLD = 100 * 1024 * 1024  # 100MB
-        if ntuple.available <= THRESHOLD:
-            self.printer(f'WARNING: not much memory left.')
+        if mem.available <= THRESHOLD:
+            message = f'WARNING: Not much memory left.'
+            if self.logging:
+                logging.warn(message)
+            if self.printing:
+                print(message)
         
+        swap = psutil.swap_memory()
+        self.printer(f'\t- Swap used: {swap.used}/{swap.total} ({swap.percent}%)')
+
 
     def print_info(self, ntuple, title=None):
         """ Generic printer without fancy explanation.
