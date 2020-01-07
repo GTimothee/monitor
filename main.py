@@ -3,7 +3,7 @@ import time
 
 if __name__ == "__main__":
     _monitor = Monitor()
-    _monitor.system_infos()
+    _monitor.system_info()
     _monitor.start()
     try:
         for i in range(50):
