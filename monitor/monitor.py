@@ -32,8 +32,8 @@ class Monitor(Thread):
 
         # options
         self.enable_print = enable_print
-        if self.enable_print:
-            self.clear_console = True
+        # if self.enable_print:
+        #     self.clear_console = True
         self.enable_log = enable_log
         self.log_dirpath = log_dirpath
         self.log_filename = log_filename
