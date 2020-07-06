@@ -26,7 +26,17 @@ class Monitor(Thread):
         self.running = False
         self.delay = 1
         if save_data:
-            self.pile = list('Initialization.')
+            self.pile = list()
+            self.ram_pile = list()
+            self.swap_pile = list()
+
+            # initialization
+            mem = psutil.virtual_memory()
+            used_ram = (mem.total - mem.available) /1024 /1024
+            swap = psutil.swap_memory()
+            used_swap = swap.used /1024 /1024 
+            self.ram_pile.append(used_ram)
+            self.swap_pile.append(used_swap)
         else:
             self.pile = None
 
@@ -82,11 +92,18 @@ class Monitor(Thread):
     def stop(self):
         """ Stop printing monitoring information.
         """
+
         self.running = False
         if self.enable_log:
             print(f'\nMonitoring log available as {self.log_filename} at {self.log_dirpath}')
 
         if self.pile:
+            mem = psutil.virtual_memory()
+            used_ram = (mem.total - mem.available) /1024 /1024
+            swap = psutil.swap_memory()
+            used_swap = swap.used /1024 /1024 
+            self.ram_pile.append(used_ram)
+            self.swap_pile.append(used_swap)
             return self.get_pile()
         else:
             print(f'no pile found')
@@ -184,6 +201,11 @@ class Monitor(Thread):
         swap = psutil.swap_memory()
         self.printer(f'\tSwap used: {swap.used /1024 /1024:.2f}/{swap.total /1024 /1024:.2f} MB ({swap.percent}%)')
 
+        used_ram = (mem.total - mem.available) /1024 /1024
+        used_swap = swap.used /1024 /1024 
+        self.ram_pile.append(used_ram)
+        self.swap_pile.append(used_swap)
+
 
     def print_info(self, ntuple, title=None):
         """ Generic printer without fancy explanation.
@@ -202,9 +224,13 @@ class Monitor(Thread):
             print(string)
         if self.enable_log:
             logging.info(string)
-        if self.pile:
-            self.pile.append(string)
+        # if self.pile:
+        #     self.pile.append(string)
 
 
     def get_pile(self):
         return self.pile
+
+
+    def get_mem_piles(self):
+        return self.ram_pile, self.swap_pile
